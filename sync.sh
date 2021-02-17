@@ -14,9 +14,10 @@ REPO_PATH=$2
 
 NEW_TAG=$(date +"%Y%m%d%H%M")
 TMP_DIR="/tmp/docker-library"
+SCRIPTS_PATH=$(cd $(dirname "${BASH_SOURCE}") && pwd -P)
 UPSTREAM="https://github.com/docker-library/official-images"
 
-SKIPE_IMAGES="windowsservercore"
+SKIP_TAG="windowsservercore"
 
 cd ${REPO_PATH}
 mkdir -p ${TMP_DIR}
@@ -31,7 +32,11 @@ diff_images() {
     : ${LAST_TAG:=$(git log upstream/master --format='%H' | tail -n1)}
     IMAGES=$(git diff --name-only --ignore-space-at-eol --ignore-space-change \
     --diff-filter=AM ${LAST_TAG} ${CURRENT_COMMIT} library | xargs -L1 -I {} sed "s|^|{}:|g" {} \
-    | sed -n "s| ||g;s|library/||g;s|:Tags:|:|p;s|:SharedTags:|:|p" | sort -u | sed "/${SKIPE_IMAGES}/d")
+    | sed -n "s| ||g;s|library/||g;s|:Tags:|:|p;s|:SharedTags:|:|p" | sort -u | sed "/${SKIP_TAG}/d")
+    if [ -s ${SCRIPTS_PATH}/images.list ];then
+        LIST="$(cat ${SCRIPTS_PATH}/images.list | sed 's|^|\^|g' | tr '\n' '|' | sed 's/|$//')"
+        IMAGES=$(echo -e ${IMAGES} | tr ' ' '\n' | grep -E "${LIST}")
+    fi
 }
 
 skopeo_copy() {
@@ -49,9 +54,6 @@ skopeo_copy() {
 }
 
 sync_images() {
-    if [ -s images.list ]; then
-        IMAGES=$(echo ${IMAGES} | grep -E $(cat images.list | tr '\n' '|' | sed 's/|$//'));
-    fi
     IFS=$'\n'
     CURRENT_NUM=0
     TOTAL_NUMS=$(echo ${IMAGES} | tr ',' ' ' | wc -w)
@@ -71,7 +73,7 @@ sync_images() {
 gen_repo_tag() {
     if git rebase upstream/master; then
         git tag ${NEW_TAG} --force
-        git push origin sync --force
+        git push origin --force
         git push origin --tag --force
     fi
 }
