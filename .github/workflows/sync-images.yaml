@@ -19,6 +19,7 @@ jobs:
       - name: Checkout official-images repo
         uses: actions/checkout@v2
         with:
+          token: ${{ secrets.TOKEN_GITHUB }}
           fetch-depth: 0
           repository: ${{ github.repository_owner }}/official-images
           path: official-images
@@ -37,3 +38,6 @@ jobs:
         run: |
           sudo skopeo login ${REGISTRY_DOMAIN} -u ${REGISTRY_USER} -p ${REGISTRY_PASSWORD}
           sudo bash ${GITHUB_WORKSPACE}/tools/sync.sh ${REGISTRY_DOMAIN} ${GITHUB_WORKSPACE}/official-images
+      # for debug action runner
+      #- name: Setup tmate session
+      #  uses: mxschmitt/action-tmate@v1

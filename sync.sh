@@ -40,8 +40,6 @@ diff_images() {
 }
 
 skopeo_copy() {
-    let CURRENT_NUM=1+${CURRENT_NUM}
-    echo -e "$YELLOW_COL Progress: ${CURRENT_NUM}/${TOTAL_NUMS} $NORMAL_COL"
     if skopeo copy --insecure-policy --src-tls-verify=false --dest-tls-verify=false -q docker://$1 docker://$2; then
         echo -e "$GREEN_COL Sync $1 successful $NORMAL_COL"
         echo ${name}:${tags} >> ${TMP_DIR}/${NEW_TAG}-successful.list
@@ -56,8 +54,10 @@ skopeo_copy() {
 sync_images() {
     IFS=$'\n'
     CURRENT_NUM=0
-    TOTAL_NUMS=$(echo ${IMAGES} | tr ',' ' ' | wc -w)
+    TOTAL_NUMS=$(echo -e ${IMAGES} | tr ' ' '\n' | wc -l)
     for image in ${IMAGES}; do
+        let CURRENT_NUM=${CURRENT_NUM}+1
+        echo -e "$YELLOW_COL Progress: ${CURRENT_NUM}/${TOTAL_NUMS} $NORMAL_COL"
         name="$(echo ${image} | cut -d ':' -f1)"
         tags="$(echo ${image} | cut -d ':' -f2 | cut -d ',' -f1)"
 
