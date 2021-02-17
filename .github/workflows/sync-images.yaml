@@ -1,0 +1,39 @@
+name: sync-images
+
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: "* */6 * * *"
+
+jobs:
+  sync-images:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+        with:
+          path: tools
+
+      - name: Checkout official-images repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          repository: ${{ github.repository_owner }}/official-images
+          path: official-images
+
+      - name: Config git user and user.email
+        run: |
+          cd ${GITHUB_WORKSPACE}/official-images && git config user.name github-actions
+          cd ${GITHUB_WORKSPACE}/official-images && git config user.email github-actions@github.com
+
+      - name: Sync images to registry
+        shell: bash
+        env:
+          REGISTRY_DOMAIN: ${{ secrets.REGISTRY_DOMAIN }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          sudo skopeo login ${REGISTRY_DOMAIN} -u ${REGISTRY_USER} -p ${REGISTRY_PASSWORD}
+          sudo bash ${GITHUB_WORKSPACE}/tools/sync.sh ${REGISTRY_DOMAIN} ${GITHUB_WORKSPACE}/official-images
