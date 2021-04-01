@@ -36,7 +36,7 @@ jobs:
           REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
           REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
         run: |
-          sudo skopeo login ${REGISTRY_DOMAIN} -u ${REGISTRY_USER} -p ${REGISTRY_PASSWORD}
+          sudo skopeo login ${REGISTRY_DOMAIN} -u ${REGISTRY_USER} -p ${REGISTRY_PASSWORD} --tls-verify=false
           sudo bash ${GITHUB_WORKSPACE}/tools/sync.sh ${REGISTRY_DOMAIN} ${GITHUB_WORKSPACE}/official-images
       # for debug action runner
       #- name: Setup tmate session
